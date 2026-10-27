@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+/*
+ * Honchar Collective — black and gold.
+ *
+ * The site is dark everywhere, so the neutral "ink" scale runs the opposite
+ * way to Tailwind's usual convention: ink-50 is the page (near-black) and
+ * ink-900 is primary text (warm ivory). That keeps the familiar meaning of
+ * each step — low numbers are backgrounds and hairlines, high numbers are
+ * text — while the whole palette sits on black.
+ *
+ * Gold follows the same idea: 50–200 are dark gold-tinted fills for chips and
+ * callouts, and 300–900 are all legible golds for text, icons, and buttons.
+ * The neutrals lean warm, toward the gold, rather than a flat grey.
+ */
+@theme {
+  --color-ink-50: #0b0a09;
+  --color-ink-100: #181613;
+  --color-ink-200: #2b2824;
+  --color-ink-300: #3f3a34;
+  --color-ink-400: #776f64;
+  --color-ink-500: #988e82;
+  --color-ink-600: #b3aa9d;
+  --color-ink-700: #cfc7ba;
+  --color-ink-800: #e4ded3;
+  --color-ink-900: #f4efe6;
+  --color-ink-950: #fbf8f2;
+
+  /* Raised surfaces: cards, panels, form sections. */
+  --color-surface: #131210;
+
+  --color-gold-50: #16120a;
+  --color-gold-100: #221b0e;
+  --color-gold-200: #3d3018;
+  --color-gold-300: #f0d78e;
+  --color-gold-400: #e4c066;
+  --color-gold-500: #d4a940;
+  --color-gold-600: #c0952c;
+  --color-gold-700: #e2bf62;
+  --color-gold-800: #ecd08a;
+  --color-gold-900: #f5e3ae;
+
+  /* Didone display face — the type of fashion mastheads. */
+  --font-serif: var(--font-bodoni), "Didot", "Bodoni 72", Georgia, ui-serif, serif;
+  /* Geometric sans in the Futura tradition for body and UI. */
+  --font-sans: var(--font-jost), "Futura", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 0.25rem;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-ink-50);
+  color: var(--color-ink-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Consistent focus ring across the site */
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--color-gold-500);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Thin gold rule used under section eyebrows. */
+.gold-rule {
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-gold-500), transparent);
+}
+
+/* Hide the number-input spinners in filter fields */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

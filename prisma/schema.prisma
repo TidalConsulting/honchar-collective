@@ -1,0 +1,227 @@
+// Honchar Collective — data model
+// Postgres in production (Vercel/Neon/Supabase). See README for setup.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  OWNER
+  STAFF
+}
+
+/// Standard resale grading, best to worst.
+enum Condition {
+  NEW
+  EXCELLENT
+  VERY_GOOD
+  GOOD
+  FAIR
+}
+
+enum ItemStatus {
+  DRAFT
+  PUBLISHED
+  SOLD
+}
+
+/// Where a piece physically is. Everything is bought in the US and shipped to
+/// the Dominican Republic, so a listing can go up while the box is still on
+/// its way — shoppers can reserve it before it lands.
+enum Arrival {
+  IN_DR
+  IN_TRANSIT
+}
+
+enum LeadType {
+  AVAILABILITY
+  LAYAWAY
+  SOURCING
+  GENERAL
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(STAFF)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Item {
+  id   String  @id @default(cuid())
+  slug String  @unique
+  sku  String? @unique
+  /// Date code or serial. Staff-only — it's how a piece is authenticated, and
+  /// publishing it makes it easy for counterfeiters to copy.
+  serialNumber String?
+
+  // Identity
+  brand     String
+  name      String
+  category  String
+  gender    String? // Women / Men / Unisex
+  condition Condition @default(EXCELLENT)
+
+  // Pricing — whole US dollars
+  price         Int
+  retailPrice   Int? // what it costs new at the boutique
+  previousPrice Int? // set automatically when price is lowered -> renders a price-drop badge
+
+  // Details
+  size     String?
+  color    String?
+  material String?
+  hardware String? // Gold-tone, silver-tone, ruthenium…
+  year     Int? // year of production, when known
+
+  // Authenticity
+  authenticated      Boolean @default(true)
+  authenticationNote String?
+
+  // Content
+  description String?
+  /// What comes with it: dust bag, box, receipt, authenticity card…
+  includes    String[] @default([])
+
+  // Import logistics
+  arrival   Arrival   @default(IN_DR)
+  arrivesAt DateTime? // expected landing date while IN_TRANSIT
+
+  // Landed cost, staff-only. What was paid in the US, and what it cost to get
+  // it to the DR (shipping, customs, duties). Together they give the margin on
+  // the dashboard. Never selected for the public site.
+  costPrice  Int?
+  importCost Int?
+
+  status   ItemStatus @default(PUBLISHED)
+  featured Boolean    @default(false)
+
+  // Sales history, for the dashboard metrics.
+  // listedAt is stamped the first time an item goes live, so days-on-market
+  // doesn't count time spent as an unphotographed draft. originalPrice is the
+  // asking price at that moment, so "sold at % of list" measures against what
+  // was first asked rather than a later reduction.
+  listedAt      DateTime?
+  originalPrice Int?
+  soldAt        DateTime?
+  soldPrice     Int?
+
+  images ItemImage[]
+  leads  Lead[]
+  views  PageView[]
+  taps   ContactTap[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([soldAt])
+  @@index([listedAt])
+  @@index([category])
+  @@index([brand])
+  @@index([price])
+  @@map("items")
+}
+
+model ItemImage {
+  id       String  @id @default(cuid())
+  itemId   String
+  url      String
+  alt      String?
+  position Int     @default(0)
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId, position])
+  @@map("item_images")
+}
+
+model Lead {
+  id      String     @id @default(cuid())
+  itemId  String?
+  name    String
+  email   String?
+  phone   String?
+  message String?
+  type    LeadType   @default(AVAILABILITY)
+  status  LeadStatus @default(NEW)
+  createdAt DateTime @default(now())
+
+  item Item? @relation(fields: [itemId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@map("leads")
+}
+
+/// One row per page view. Sessions are derived by grouping on sessionId, which
+/// is generated in the browser and held in sessionStorage — no cookies, no IP
+/// addresses, nothing that identifies a person.
+model PageView {
+  id        String  @id
+  sessionId String
+  path      String
+  /// Set when the path is an item listing, so views can be counted per piece.
+  itemId    String?
+  /// Time the visitor spent on this page, filled in by a beacon when they leave.
+  dwellMs   Int     @default(0)
+
+  /// How the visit started, carried on every view in the session so an item's
+  /// views can be broken down by channel. Classified in the browser from the
+  /// referrer and any campaign tags — see attribution.ts.
+  source       String?
+  /// Referring site, host only. Never the full URL: those carry search terms
+  /// and other people's query strings, and none of that is needed here.
+  referrerHost String?
+  utmSource    String?
+  utmMedium    String?
+  utmCampaign  String?
+
+  createdAt DateTime @default(now())
+
+  item Item? @relation(fields: [itemId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([sessionId])
+  @@index([itemId, createdAt])
+  @@index([source, createdAt])
+  @@map("page_views")
+}
+
+/// A tap on a WhatsApp or call button. In the DR most enquiries start in
+/// WhatsApp rather than a web form, so without this the dashboard would miss
+/// most of the interest a listing generates. Same privacy rules as PageView:
+/// a tab-scoped session id and the page, nothing about the person.
+model ContactTap {
+  id        String  @id
+  sessionId String
+  path      String
+  itemId    String?
+  /// "whatsapp" or "phone"
+  channel   String
+  source    String?
+
+  createdAt DateTime @default(now())
+
+  item Item? @relation(fields: [itemId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([itemId, createdAt])
+  @@map("contact_taps")
+}
