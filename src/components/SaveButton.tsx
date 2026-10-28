@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n/client";
 import { useSaved } from "@/lib/useSaved";
 
 export function SaveButton({
@@ -12,6 +13,7 @@ export function SaveButton({
   withLabel?: boolean;
 }) {
   const { isSaved, toggle, ready } = useSaved();
+  const { t } = useT();
   const saved = ready && isSaved(itemId);
 
   return (
@@ -23,7 +25,7 @@ export function SaveButton({
         toggle(itemId);
       }}
       aria-pressed={saved}
-      aria-label={saved ? "Remove from saved" : "Save this item"}
+      aria-label={saved ? t.card.unsave : t.card.save}
       className={
         withLabel
           ? `inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors ${
@@ -43,7 +45,7 @@ export function SaveButton({
       >
         <path d="M12 20.3 4.6 13a4.6 4.6 0 0 1 6.5-6.5l.9.9.9-.9A4.6 4.6 0 0 1 19.4 13L12 20.3Z" strokeLinejoin="round" />
       </svg>
-      {withLabel && <span>{saved ? "Saved" : "Save"}</span>}
+      {withLabel && <span>{saved ? t.card.savedLabel : t.card.saveLabel}</span>}
     </button>
   );
 }

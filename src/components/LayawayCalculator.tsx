@@ -8,7 +8,9 @@ import {
   PAYMENT_OPTIONS,
   layawayInstalment,
 } from "@/lib/finance";
-import { formatDop, formatPrice, formatShortDate } from "@/lib/format";
+import { formatDop, formatPrice } from "@/lib/format";
+import { useT } from "@/lib/i18n/client";
+import { shortDate } from "@/lib/i18n/dictionaries";
 
 const MAX_PRICE = 100_000;
 const DEPOSIT_STEPS = [20, 30, 40, 50] as const;
@@ -25,6 +27,8 @@ export function LayawayCalculator({
    */
   editablePrice?: boolean;
 }) {
+  const { lang, t } = useT();
+  const c = t.layaway.calc;
   const [price, setPrice] = useState(initialPrice);
   const [depositPercent, setDepositPercent] = useState<number>(LAYAWAY_DEFAULTS.depositPercent);
   const [payments, setPayments] = useState<number>(LAYAWAY_DEFAULTS.payments);
@@ -47,16 +51,14 @@ export function LayawayCalculator({
 
   return (
     <div className="rounded-card border border-ink-200 bg-surface p-5">
-      <h3 className="font-serif text-xl text-ink-900">Layaway plan</h3>
+      <h3 className="font-serif text-xl text-ink-900">{c.title}</h3>
       <p className="mt-1 text-sm text-ink-600">
-        {editablePrice
-          ? "Put in a price and see how a layaway plan would work. No interest, no credit check."
-          : "Hold this piece with a deposit and pay the rest over time. No interest, no credit check."}
+        {editablePrice ? c.introEditable : c.introItem}
       </p>
 
       {editablePrice && (
         <label className="mt-5 block">
-          <span className="mb-1 block text-sm font-semibold text-ink-800">Item price (USD)</span>
+          <span className="mb-1 block text-sm font-semibold text-ink-800">{c.price}</span>
           <div className="relative">
             <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400">
               $
@@ -81,32 +83,32 @@ export function LayawayCalculator({
 
       <div className="mt-5 rounded-lg border border-gold-500/40 bg-black px-5 py-4 text-center">
         <p className="text-[0.7rem] uppercase tracking-[0.2em] text-gold-400">
-          {payments} payments of
+          {c.paymentsOf(payments)}
         </p>
         <p className="mt-1 font-serif text-4xl text-ink-900 tabular-nums">
           ${instalment.toLocaleString()}
         </p>
         <p className="mt-1 text-xs text-ink-500 tabular-nums">
-          after a {formatPrice(deposit)} deposit · {formatDop(instalment)} each
+          {c.after(formatPrice(deposit), formatDop(instalment) ?? "")}
         </p>
       </div>
 
       <div className="mt-5 space-y-5">
         <Choice
-          label="Deposit today"
+          label={c.deposit}
           options={DEPOSIT_STEPS.map((value) => ({ value, label: `${value}%` }))}
           value={depositPercent}
           onChange={setDepositPercent}
         />
         <Choice
-          label="Number of payments"
+          label={c.payments}
           options={PAYMENT_OPTIONS.map((value) => ({ value, label: String(value) }))}
           value={payments}
           onChange={setPayments}
         />
         <Choice
-          label="How often"
-          options={INTERVAL_OPTIONS.map((option) => ({ value: option.days, label: option.label }))}
+          label={c.howOften}
+          options={INTERVAL_OPTIONS.map((option) => ({ value: option.days, label: c.intervals[option.days] ?? option.label }))}
           value={interval}
           onChange={setIntervalDays}
         />
@@ -114,14 +116,13 @@ export function LayawayCalculator({
 
       {lastPayment && price > 0 && (
         <p className="mt-5 text-sm text-ink-600">
-          Start today and the piece is yours on{" "}
-          <span className="font-semibold text-ink-900">{formatShortDate(lastPayment)}</span>.
+          {c.yours}{" "}
+          <span className="font-semibold text-ink-900">{shortDate(lastPayment, lang)}</span>.
         </p>
       )}
 
       <p className="mt-4 text-xs leading-relaxed text-ink-500">
-        The piece stays in our showroom, insured, until the final payment. Deposits are
-        non-refundable after 7 days but can be moved to another piece. Peso amounts are approximate.
+        {c.note}
       </p>
     </div>
   );

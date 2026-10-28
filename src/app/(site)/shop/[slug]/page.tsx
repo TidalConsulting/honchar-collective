@@ -10,15 +10,9 @@ import { SaveButton } from "@/components/SaveButton";
 import { TrackItemView } from "@/components/TrackItemView";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { LAYAWAY_DEFAULTS, LAYAWAY_MIN_PRICE, estimatedInstalment } from "@/lib/finance";
-import {
-  CONDITION_DETAIL,
-  CONDITION_LABEL,
-  formatDop,
-  formatPrice,
-  formatShortDate,
-  itemTitle,
-  percentOffRetail,
-} from "@/lib/format";
+import { formatDop, formatPrice, itemTitle, percentOffRetail } from "@/lib/format";
+import { label, shortDate, type Dict } from "@/lib/i18n/dictionaries";
+import { getT } from "@/lib/i18n/server";
 import { getItemBySlug, getSimilarItems } from "@/lib/items";
 import { addressLine, cityState, site } from "@/lib/site";
 import { siteUrl } from "@/lib/url";
@@ -29,21 +23,21 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const item = await getItemBySlug(slug);
-  if (!item) return { title: "Item not found" };
+  const [item, { t }] = await Promise.all([getItemBySlug(slug), getT()]);
+  if (!item) return { title: t.item.notFound };
 
   const title = `${itemTitle(item)} — ${formatPrice(item.price)}`;
   return {
     title,
     description:
       item.description?.slice(0, 180) ??
-      `Authentic ${itemTitle(item)} for sale at ${site.name}, delivered in ${cityState}.`,
+      t.item.metaDescription(itemTitle(item), site.name, cityState ?? ""),
   };
 }
 
 export default async function ItemDetailPage({ params }: Props) {
   const { slug } = await params;
-  const item = await getItemBySlug(slug);
+  const [item, { lang, t }] = await Promise.all([getItemBySlug(slug), getT()]);
   if (!item) notFound();
 
   const title = itemTitle(item);
@@ -57,19 +51,19 @@ export default async function ItemDetailPage({ params }: Props) {
       : null;
 
   const details: { label: string; value: string }[] = [
-    { label: "Brand", value: item.brand },
-    { label: "Category", value: item.category },
-    { label: "Condition", value: CONDITION_LABEL[item.condition] },
-    { label: "Size", value: item.size ?? "—" },
-    { label: "Color", value: item.color ?? "—" },
-    { label: "Material", value: item.material ?? "—" },
-    { label: "Hardware", value: item.hardware ?? "—" },
-    { label: "Year", value: item.year ? String(item.year) : "—" },
-    { label: "For", value: item.gender ?? "—" },
-    { label: "SKU", value: item.sku ?? "—" },
+    { label: t.item.spec.brand, value: item.brand },
+    { label: t.item.spec.category, value: label(t.category, item.category) },
+    { label: t.item.spec.condition, value: label(t.condition, item.condition) },
+    { label: t.item.spec.size, value: item.size ?? "—" },
+    { label: t.item.spec.color, value: item.color ?? "—" },
+    { label: t.item.spec.material, value: item.material ?? "—" },
+    { label: t.item.spec.hardware, value: item.hardware ? label(t.hardware, item.hardware) : "—" },
+    { label: t.item.spec.year, value: item.year ? String(item.year) : "—" },
+    { label: t.item.spec.for, value: item.gender ? label(t.gender, item.gender) : "—" },
+    { label: t.item.spec.sku, value: item.sku ?? "—" },
   ];
 
-  const whatsappMessage = `Hi! I'm interested in the ${title}${item.sku ? ` (SKU ${item.sku})` : ""} — ${siteUrl()}/shop/${item.slug}`;
+  const whatsappMessage = t.whatsapp.msgItem(title, item.sku, `${siteUrl()}/shop/${item.slug}`);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
@@ -78,11 +72,11 @@ export default async function ItemDetailPage({ params }: Props) {
       <nav aria-label="Breadcrumb" className="mb-6 text-xs uppercase tracking-[0.16em] text-ink-500">
         <ol className="flex flex-wrap items-center gap-2">
           <li>
-            <Link href="/" className="hover:text-gold-400">Home</Link>
+            <Link href="/" className="hover:text-gold-400">{t.item.home}</Link>
           </li>
           <li aria-hidden="true">/</li>
           <li>
-            <Link href="/shop" className="hover:text-gold-400">Shop</Link>
+            <Link href="/shop" className="hover:text-gold-400">{t.item.shop}</Link>
           </li>
           <li aria-hidden="true">/</li>
           <li>
@@ -90,7 +84,7 @@ export default async function ItemDetailPage({ params }: Props) {
               href={`/shop?category=${encodeURIComponent(item.category)}`}
               className="hover:text-gold-400"
             >
-              {item.category}
+              {label(t.category, item.category)}
             </Link>
           </li>
           <li aria-hidden="true">/</li>
@@ -101,7 +95,7 @@ export default async function ItemDetailPage({ params }: Props) {
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
         <div className="min-w-0">
           <div className="mb-5 lg:hidden">
-            <PriceBlock item={item} drop={drop} title={title} sold={sold} />
+            <PriceBlock item={item} drop={drop} title={title} sold={sold} t={t} />
           </div>
 
           <ItemGallery
@@ -114,7 +108,7 @@ export default async function ItemDetailPage({ params }: Props) {
 
           {item.description && (
             <section className="mt-10">
-              <SectionHeading>The piece</SectionHeading>
+              <SectionHeading>{t.item.piece}</SectionHeading>
               <div className="mt-4 space-y-3 text-[0.97rem] leading-relaxed text-ink-700">
                 {item.description.split(/\n{2,}/).map((paragraph, index) => (
                   <p key={index}>{paragraph}</p>
@@ -124,7 +118,7 @@ export default async function ItemDetailPage({ params }: Props) {
           )}
 
           <section className="mt-10">
-            <SectionHeading>Details</SectionHeading>
+            <SectionHeading>{t.item.details}</SectionHeading>
             <dl className="mt-4 grid overflow-hidden rounded-card border border-ink-200 bg-surface sm:grid-cols-2">
               {details.map((spec) => (
                 <div
@@ -140,7 +134,7 @@ export default async function ItemDetailPage({ params }: Props) {
 
           {item.includes.length > 0 && (
             <section className="mt-10">
-              <SectionHeading>Comes with</SectionHeading>
+              <SectionHeading>{t.item.comesWith}</SectionHeading>
               <ul className="mt-4 flex flex-wrap gap-2">
                 {item.includes.map((entry) => (
                   <li
@@ -150,7 +144,7 @@ export default async function ItemDetailPage({ params }: Props) {
                     <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-gold-500" fill="none">
                       <path d="m5 13 4 4L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    {entry}
+                    {label(t.includes, entry)}
                   </li>
                 ))}
               </ul>
@@ -160,45 +154,28 @@ export default async function ItemDetailPage({ params }: Props) {
           <section className="mt-10 grid gap-4 sm:grid-cols-2">
             <div className="rounded-card border border-ink-200 bg-surface p-5">
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-gold-500">
-                Condition · {CONDITION_LABEL[item.condition]}
+                {t.item.conditionHeading(label(t.condition, item.condition))}
               </p>
               <p className="mt-2 text-sm leading-relaxed text-ink-700">
-                {CONDITION_DETAIL[item.condition]}
+                {label(t.conditionDetail, item.condition)}
               </p>
             </div>
             <div className="rounded-card border border-ink-200 bg-surface p-5">
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-gold-500">
-                Authenticity
+                {t.item.authenticity}
               </p>
               <p className="mt-2 text-sm leading-relaxed text-ink-700">
                 {item.authenticated
-                  ? (item.authenticationNote ??
-                    "Inspected and authenticated before it was listed. If it is ever proven not genuine, you get every peso back.")
-                  : "Authentication is in progress. This piece cannot be purchased until it has been verified."}
+                  ? (item.authenticationNote ?? t.item.authenticDefault)
+                  : t.item.authenticPending}
               </p>
             </div>
           </section>
 
           <section className="mt-10 rounded-card border border-ink-200 bg-surface p-6">
-            <SectionHeading>How it works</SectionHeading>
+            <SectionHeading>{t.item.how}</SectionHeading>
             <ol className="mt-5 grid gap-6 sm:grid-cols-3">
-              {[
-                {
-                  step: "1",
-                  title: "Reserve it",
-                  body: "Send us a WhatsApp or the form. We hold the piece for 24 hours while we talk it through.",
-                },
-                {
-                  step: "2",
-                  title: "See it up close",
-                  body: "Get a live video of the piece, or visit us by appointment to see it in person.",
-                },
-                {
-                  step: "3",
-                  title: "Pay your way",
-                  body: "Pay in full, or put down a deposit and finish on layaway. Delivery anywhere in the DR.",
-                },
-              ].map((entry) => (
+              {t.item.howSteps.map((entry, index) => ({ ...entry, step: String(index + 1) })).map((entry) => (
                 <li key={entry.step}>
                   <span className="flex h-8 w-8 items-center justify-center rounded-full border border-gold-500 font-serif text-sm text-gold-400">
                     {entry.step}
@@ -214,19 +191,19 @@ export default async function ItemDetailPage({ params }: Props) {
         <div className="min-w-0">
           <div className="space-y-5 lg:sticky lg:top-28">
             <div className="hidden lg:block">
-              <PriceBlock item={item} drop={drop} title={title} sold={sold} />
+              <PriceBlock item={item} drop={drop} title={title} sold={sold} t={t} />
             </div>
 
             {inTransit && (
               <div className="rounded-card border border-gold-500/50 bg-gold-50 p-5">
                 <p className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-gold-400">
-                  On its way from the US
+                  {t.item.onTheWay}
                 </p>
                 <p className="mt-2 text-sm leading-relaxed text-ink-700">
                   {item.arrivesAt
-                    ? `Expected in ${site.city} around ${formatShortDate(item.arrivesAt)}.`
-                    : `Usually ${site.shippingDays} days door to door.`}{" "}
-                  Reserve it now and it&apos;s yours the day it lands.
+                    ? t.item.expected(site.city, shortDate(item.arrivesAt, lang))
+                    : t.item.usually(site.shippingDays)}{" "}
+                  {t.item.reserveNow}
                 </p>
               </div>
             )}
@@ -234,22 +211,19 @@ export default async function ItemDetailPage({ params }: Props) {
             <div className="rounded-card border border-ink-200 bg-surface p-5">
               {sold ? (
                 <>
-                  <h3 className="font-serif text-xl text-ink-900">This piece has sold</h3>
-                  <p className="mt-1 text-sm text-ink-600">
-                    Tell us what you were after. We can find another one in the US and ship it to
-                    you, usually within {site.shippingDays} days.
-                  </p>
+                  <h3 className="font-serif text-xl text-ink-900">{t.item.soldTitle}</h3>
+                  <p className="mt-1 text-sm text-ink-600">{t.item.soldBody(site.shippingDays)}</p>
                   <Link
                     href="/request"
                     className="mt-4 block rounded-full bg-gold-500 px-5 py-3 text-center text-sm font-semibold uppercase tracking-[0.14em] text-black hover:bg-gold-400"
                   >
-                    Find me one
+                    {t.item.findOne}
                   </Link>
                   <Link
                     href={`/shop?category=${encodeURIComponent(item.category)}`}
                     className="mt-2 block rounded-full border border-ink-300 px-5 py-3 text-center text-sm font-semibold text-ink-800 hover:bg-ink-100"
                   >
-                    Browse similar pieces
+                    {t.item.browseSimilar}
                   </Link>
                 </>
               ) : (
@@ -257,14 +231,14 @@ export default async function ItemDetailPage({ params }: Props) {
                   <WhatsAppButton message={whatsappMessage} itemId={item.id} className="w-full" />
                   <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-ink-400">
                     <span className="h-px flex-1 bg-ink-200" />
-                    or leave your details
+                    {t.item.orDetails}
                     <span className="h-px flex-1 bg-ink-200" />
                   </div>
                   <LeadForm
                     itemId={item.id}
-                    heading={inTransit ? "Reserve before it lands" : "Check availability"}
-                    subheading={item.sku ? `Ask about SKU ${item.sku}` : `Ask about this piece`}
-                    submitLabel={inTransit ? "Reserve this piece" : "Check availability"}
+                    heading={inTransit ? t.item.reserveHeading : t.item.checkHeading}
+                    subheading={item.sku ? t.item.askSku(item.sku) : t.item.askPiece}
+                    submitLabel={inTransit ? t.item.reserveButton : t.item.checkHeading}
                     compact
                     defaultMessage=""
                   />
@@ -280,17 +254,17 @@ export default async function ItemDetailPage({ params }: Props) {
                     <path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6.1L12 16.8 6.6 19.7l1.2-6.1L3.3 9.4l6.1-.8L12 3Z" />
                   </svg>
                   {site.reviews.rating} · {site.reviews.count}{" "}
-                  {site.reviews.count === 1 ? "review" : "reviews"}
+                  {t.item.reviews(site.reviews.count)}
                 </div>
               )}
               <p className="mt-2 text-sm text-ink-600">
-                {addressLine ?? `${cityState} · showroom by appointment`}
+                {addressLine ?? t.item.showroom(cityState ?? "")}
               </p>
               <a
                 href={site.phoneHref}
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-ink-300 px-5 py-3 text-sm font-semibold text-ink-900 hover:bg-ink-100"
               >
-                Call {site.phone}
+                {t.item.call(site.phone)}
               </a>
             </div>
 
@@ -302,9 +276,9 @@ export default async function ItemDetailPage({ params }: Props) {
       {similar.length > 0 && (
         <section className="mt-20">
           <div className="flex items-end justify-between gap-4">
-            <h2 className="font-serif text-3xl text-ink-900">You may also like</h2>
+            <h2 className="font-serif text-3xl text-ink-900">{t.item.alsoLike}</h2>
             <Link href="/shop" className="text-sm font-semibold text-gold-500 hover:underline">
-              View all →
+              {t.item.viewAll}
             </Link>
           </div>
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -332,7 +306,9 @@ function PriceBlock({
   drop,
   title,
   sold,
+  t,
 }: {
+  t: Dict;
   item: {
     id: string;
     brand: string;
@@ -359,21 +335,21 @@ function PriceBlock({
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <span className="rounded-full border border-ink-300 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-ink-700">
-          {CONDITION_LABEL[item.condition]}
+          {label(t.condition, item.condition)}
         </span>
         {item.authenticated && (
           <span className="rounded-full border border-gold-500/60 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-gold-400">
-            Authenticated
+            {t.card.authenticated}
           </span>
         )}
         {sold && (
           <span className="rounded-full bg-red-700 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-white">
-            Sold
+            {t.card.sold}
           </span>
         )}
         {drop && !sold && (
           <span className="rounded-full bg-emerald-700 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-white">
-            {formatPrice(drop)} price drop
+            {t.item.priceDrop(formatPrice(drop))}
           </span>
         )}
       </div>
@@ -384,20 +360,23 @@ function PriceBlock({
         </p>
         {item.retailPrice && item.retailPrice > item.price && (
           <p className="text-base text-ink-500 line-through tabular-nums">
-            Retail {formatPrice(item.retailPrice)}
+            {t.item.retail(formatPrice(item.retailPrice))}
           </p>
         )}
       </div>
       <p className="mt-1 text-sm text-ink-500 tabular-nums">
         {formatDop(item.price)}
-        {off ? <span className="ml-2 font-semibold text-gold-400">{off}% below retail</span> : null}
+        {off ? <span className="ml-2 font-semibold text-gold-400">{t.card.belowRetail(off)}</span> : null}
       </p>
       {instalment && (
         <p className="mt-2 text-sm text-ink-600">
-          Or layaway:{" "}
+          {t.item.layawayLine}{" "}
           <span className="font-semibold text-ink-900">
-            {LAYAWAY_DEFAULTS.depositPercent}% down, then {LAYAWAY_DEFAULTS.payments} payments of $
-            {instalment.toLocaleString()}
+            {t.item.layawayPlan(
+              LAYAWAY_DEFAULTS.depositPercent,
+              LAYAWAY_DEFAULTS.payments,
+              formatPrice(instalment),
+            )}
           </span>
         </p>
       )}

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { ItemIllustration } from "@/components/ItemIllustration";
+import { useT } from "@/lib/i18n/client";
 
 type GalleryImage = { id: string; url: string; alt: string | null };
 
@@ -22,6 +23,7 @@ export function ItemGallery({
 }) {
   const [index, setIndex] = useState(0);
   const [zoomed, setZoomed] = useState(false);
+  const { t } = useT();
 
   useEffect(() => {
     if (!zoomed) return;
@@ -44,7 +46,7 @@ export function ItemGallery({
           className="aspect-[4/5] w-full"
         />
         <p className="border-t border-ink-200 px-4 py-3 text-center text-sm text-ink-500">
-          Photos of this piece are being taken now — message us on WhatsApp for a video today.
+          {t.item.photosPending}
         </p>
       </div>
     );
@@ -90,7 +92,7 @@ export function ItemGallery({
               key={image.id}
               type="button"
               onClick={() => setIndex(thumbIndex)}
-              aria-label={`View photo ${thumbIndex + 1}`}
+              aria-label={t.item.viewPhoto(thumbIndex + 1)}
               className={`relative h-24 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition ${
                 thumbIndex === index ? "border-gold-500" : "border-transparent opacity-70 hover:opacity-100"
               }`}
@@ -113,12 +115,12 @@ export function ItemGallery({
           onClick={() => setZoomed(false)}
           role="dialog"
           aria-modal="true"
-          aria-label={`${title} photo viewer`}
+          aria-label={t.item.viewer(title)}
         >
           <button
             type="button"
             onClick={() => setZoomed(false)}
-            aria-label="Close photo viewer"
+            aria-label={t.item.closeViewer}
             className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
@@ -141,11 +143,12 @@ export function ItemGallery({
 }
 
 function ArrowButton({ side, onClick }: { side: "left" | "right"; onClick: () => void }) {
+  const { t } = useT();
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={side === "left" ? "Previous photo" : "Next photo"}
+      aria-label={side === "left" ? t.card.prevPhoto : t.card.nextPhoto}
       className={`absolute top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-gold-300 shadow transition hover:bg-black ${
         side === "left" ? "left-3" : "right-3"
       }`}

@@ -1,17 +1,13 @@
+"use client";
+
 import Link from "next/link";
 
 import { ItemPhoto } from "@/components/ItemPhoto";
 import { SaveButton } from "@/components/SaveButton";
 import { estimatedInstalment } from "@/lib/finance";
-import {
-  CONDITION_LABEL,
-  formatDop,
-  formatPrice,
-  formatShortDate,
-  isWithinDays,
-  itemTitle,
-  percentOffRetail,
-} from "@/lib/format";
+import { formatDop, formatPrice, isWithinDays, itemTitle, percentOffRetail } from "@/lib/format";
+import { useT } from "@/lib/i18n/client";
+import { label, shortDate } from "@/lib/i18n/dictionaries";
 import type { ItemCard as ItemCardData } from "@/lib/items";
 
 const NEW_DAYS = 10;
@@ -23,6 +19,7 @@ export function ItemCard({
   item: ItemCardData;
   priority?: boolean;
 }) {
+  const { lang, t } = useT();
   const title = itemTitle(item);
   const sold = item.status === "SOLD";
   const inTransit = !sold && item.arrival === "IN_TRANSIT";
@@ -36,16 +33,16 @@ export function ItemCard({
 
   // One badge, in order of what a shopper most needs to know first.
   const badge = sold
-    ? { label: "Sold", tone: "bg-ink-900 text-black" }
+    ? { label: t.card.sold, tone: "bg-ink-900 text-black" }
     : inTransit
       ? {
-          label: item.arrivesAt ? `Arrives ${formatShortDate(item.arrivesAt)}` : "In transit",
+          label: item.arrivesAt ? t.card.arrives(shortDate(item.arrivesAt, lang)) : t.card.inTransit,
           tone: "border border-gold-500/60 bg-black/75 text-gold-300 backdrop-blur",
         }
       : item.featured
-        ? { label: "★ Featured", tone: "bg-gold-500 text-black" }
+        ? { label: t.card.featured, tone: "bg-gold-500 text-black" }
         : isNew
-          ? { label: "Just in", tone: "border border-ink-700/40 bg-black/70 text-ink-900 backdrop-blur" }
+          ? { label: t.card.justIn, tone: "border border-ink-700/40 bg-black/70 text-ink-900 backdrop-blur" }
           : null;
 
   return (
@@ -85,7 +82,7 @@ export function ItemCard({
         </h3>
 
         <p className="mt-1 text-sm text-ink-500">
-          {[CONDITION_LABEL[item.condition], item.size ? `Size ${item.size}` : null, item.color]
+          {[label(t.condition, item.condition), item.size ? t.card.size(item.size) : null, item.color]
             .filter(Boolean)
             .join(" · ")}
         </p>
@@ -108,14 +105,14 @@ export function ItemCard({
                 {formatPrice(drop)}
               </span>
             ) : off ? (
-              <span className="text-xs font-semibold text-gold-400">{off}% below retail</span>
+              <span className="text-xs font-semibold text-gold-400">{t.card.belowRetail(off)}</span>
             ) : null}
           </div>
 
           <p className="mt-1 text-xs text-ink-500 tabular-nums">
             {sold
-              ? "Sold — no longer available"
-              : [formatDop(item.price), instalment ? `or $${instalment.toLocaleString()} ×4 on layaway` : null]
+              ? t.card.soldNote
+              : [formatDop(item.price), instalment ? t.card.layawayShort(formatPrice(instalment)) : null]
                   .filter(Boolean)
                   .join(" · ")}
           </p>
@@ -126,7 +123,7 @@ export function ItemCard({
                 <path d="M12 3 5 6v6c0 4.4 3 8.2 7 9 4-.8 7-4.6 7-9V6l-7-3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
                 <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Authenticated
+              {t.card.authenticated}
             </p>
           )}
 
@@ -137,7 +134,7 @@ export function ItemCard({
                 : "border border-gold-500 text-gold-300 group-hover:bg-gold-500 group-hover:text-black"
             }`}
           >
-            {sold ? "See what sold" : inTransit ? "Reserve before it lands" : "Check availability"}
+            {sold ? t.card.seeSold : inTransit ? t.card.reserve : t.card.check}
           </span>
         </div>
       </div>

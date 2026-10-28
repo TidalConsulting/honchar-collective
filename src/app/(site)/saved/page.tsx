@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { ItemCard } from "@/components/ItemCard";
+import { useT } from "@/lib/i18n/client";
 import { useSaved } from "@/lib/useSaved";
 import type { ItemCard as ItemCardData } from "@/lib/items";
 
 export default function SavedPage() {
   const { ids, ready } = useSaved();
+  const { t } = useT();
   const key = ids.join(",");
   const [cache, setCache] = useState<{ key: string; items: ItemCardData[] } | null>(null);
 
@@ -31,10 +33,10 @@ export default function SavedPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-gold-500">Wishlist</p>
-      <h1 className="mt-2 font-serif text-4xl text-ink-900 sm:text-5xl">Your saved pieces</h1>
+      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-gold-500">{t.saved.eyebrow}</p>
+      <h1 className="mt-2 font-serif text-4xl text-ink-900 sm:text-5xl">{t.saved.title}</h1>
       <p className="mt-2 text-ink-600">
-        Saved on this device. Tap the heart on any listing to add it here.
+        {t.saved.lede}
       </p>
 
       {items === null ? (
@@ -45,15 +47,15 @@ export default function SavedPage() {
         </div>
       ) : items.length === 0 ? (
         <div className="mt-8 rounded-card border border-dashed border-ink-300 bg-surface px-6 py-20 text-center">
-          <h2 className="font-serif text-2xl text-ink-900">Nothing saved yet</h2>
+          <h2 className="font-serif text-2xl text-ink-900">{t.saved.emptyTitle}</h2>
           <p className="mx-auto mt-2 max-w-md text-ink-600">
-            Browse the collection and tap the heart on anything you love.
+            {t.saved.emptyBody}
           </p>
           <Link
             href="/shop"
             className="mt-6 inline-flex rounded-full bg-gold-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-gold-400"
           >
-            Shop the collection
+            {t.saved.shop}
           </Link>
         </div>
       ) : (

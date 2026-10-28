@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { InventoryFilters } from "@/components/InventoryFilters";
+import { useT } from "@/lib/i18n/client";
 import type { InventoryResult } from "@/lib/items";
 
 export function MobileFilterDrawer(props: {
@@ -11,6 +12,7 @@ export function MobileFilterDrawer(props: {
   total: number;
 }) {
   const [open, setOpen] = useState(false);
+  const { t } = useT();
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -29,25 +31,25 @@ export function MobileFilterDrawer(props: {
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
           <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
-        Filters
+        {t.filters.filters}
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
-            aria-label="Close filters"
+            aria-label={t.filters.close}
             onClick={() => setOpen(false)}
             className="absolute inset-0 bg-black/70"
           />
           <div className="absolute inset-y-0 left-0 flex w-[min(24rem,92vw)] flex-col bg-ink-50 shadow-xl">
             <div className="flex items-center justify-between border-b border-ink-200 bg-surface px-4 py-4">
-              <h2 className="font-serif text-xl text-ink-900">Filters</h2>
+              <h2 className="font-serif text-xl text-ink-900">{t.filters.filters}</h2>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 className="flex h-9 w-9 items-center justify-center rounded-lg border border-ink-200 text-ink-700"
-                aria-label="Close filters"
+                aria-label={t.filters.close}
               >
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
                   <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -65,7 +67,7 @@ export function MobileFilterDrawer(props: {
                 onClick={() => setOpen(false)}
                 className="w-full rounded-full bg-gold-500 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-black"
               >
-                Show {props.total.toLocaleString()} results
+                {t.filters.show(props.total)}
               </button>
             </div>
           </div>

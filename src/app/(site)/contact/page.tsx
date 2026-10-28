@@ -3,21 +3,23 @@ import type { Metadata } from "next";
 import { LeadForm } from "@/components/LeadForm";
 import { PageIntro } from "@/components/PageIntro";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { label } from "@/lib/i18n/dictionaries";
+import { getT } from "@/lib/i18n/server";
 import { addressLine, cityState, site } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description: `WhatsApp, call, or email ${site.name} in ${cityState}.`,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return { title: t.nav.contact, description: t.contact.metaDescription(site.name, cityState ?? "") };
+}
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const { t } = await getT();
+  const c = t.contact;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-      <PageIntro eyebrow="Contact" title="We're a message away.">
-        <p>
-          Questions about a piece, a size, or a delivery? WhatsApp is the fastest way to reach us.
-          We answer every message ourselves.
-        </p>
+      <PageIntro eyebrow={c.eyebrow} title={c.title}>
+        <p>{c.lede}</p>
       </PageIntro>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_1.1fr]">
@@ -27,22 +29,22 @@ export default function ContactPage() {
             <p className="mt-1 text-lg font-semibold text-ink-900">{site.phone}</p>
             <WhatsAppButton className="mt-4" />
           </div>
-          <InfoCard title="Call" body={site.phone} href={site.phoneHref} />
-          <InfoCard title="Email" body={site.email} href={`mailto:${site.email}`} />
+          <InfoCard title={c.call} body={site.phone} href={site.phoneHref} />
+          <InfoCard title={c.email} body={site.email} href={`mailto:${site.email}`} />
           <InfoCard
             title="Instagram"
             body={`@${site.instagram}`}
             href={`https://instagram.com/${site.instagram}`}
           />
-          <InfoCard title="Showroom" body={addressLine ?? `${cityState} · by appointment`} />
+          <InfoCard title={c.showroom} body={addressLine ?? `${cityState} · ${t.footer.byAppointment}`} />
 
           <div className="rounded-card border border-ink-200 bg-surface p-6">
-            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">Hours</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">{c.hours}</h2>
             <dl className="mt-3 space-y-2 text-sm">
               {site.hours.map((entry) => (
                 <div key={entry.days} className="flex justify-between gap-4">
-                  <dt className="text-ink-600">{entry.days}</dt>
-                  <dd className="font-semibold text-ink-900">{entry.time}</dd>
+                  <dt className="text-ink-600">{label(t.hours, entry.days)}</dt>
+                  <dd className="font-semibold text-ink-900">{label(t.hours, entry.time)}</dd>
                 </div>
               ))}
             </dl>
@@ -52,10 +54,10 @@ export default function ContactPage() {
         <div className="rounded-card border border-ink-200 bg-surface p-6">
           <LeadForm
             type="GENERAL"
-            heading="Send us a message"
-            subheading="We reply within a few hours during opening hours."
-            messagePlaceholder="Ask us anything: a piece, a size, delivery, or layaway."
-            submitLabel="Send message"
+            heading={c.formHeading}
+            subheading={c.formSub}
+            messagePlaceholder={c.formPlaceholder}
+            submitLabel={c.formSubmit}
           />
         </div>
       </div>

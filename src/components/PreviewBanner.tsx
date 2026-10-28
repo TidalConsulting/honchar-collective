@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import { isPublicSite } from "@/lib/url";
 
 /**
@@ -5,13 +6,13 @@ import { isPublicSite } from "@/lib/url";
  * the test site mistakes the sample inventory for real stock. Renders nothing
  * on the live site.
  */
-export function PreviewBanner() {
+export async function PreviewBanner() {
   if (isPublicSite()) return null;
+  const { t } = await getT();
 
   return (
-    <div className="bg-gold-500 px-4 py-2 text-center text-sm font-semibold text-white">
-      Preview site — items shown are sample data, not real stock. Not visible to search
-      engines.
+    <div className="bg-gold-500 px-4 py-2 text-center text-sm font-semibold text-black">
+      {t.preview}
     </div>
   );
 }

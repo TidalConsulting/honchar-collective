@@ -47,7 +47,7 @@ export function Logo({ className = "" }: { className?: string }) {
 
   return (
     <span className={`inline-flex flex-col items-start leading-none ${className}`}>
-      <span className="font-serif text-[1.55rem] leading-none tracking-[0.14em] text-ink-900 lg:text-[1.75rem]">
+      <span className="font-serif text-[1.3rem] leading-none tracking-[0.14em] text-ink-900 sm:text-[1.55rem] lg:text-[1.75rem]">
         HONCHAR
       </span>
       <span className="mt-1.5 flex w-full items-center gap-2">

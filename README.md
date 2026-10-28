@@ -46,8 +46,6 @@ These are placeholders and must be replaced:
 - **Tracking IDs** — the Honchar Auto Google Ads and Meta pixel IDs were removed.
   Set `NEXT_PUBLIC_GOOGLE_ADS_ID` / `NEXT_PUBLIC_META_PIXEL_ID` for the
   Collective's own accounts to switch them on.
-- The site copy is in English. For a Dominican audience a Spanish version (or
-  a language toggle) is the obvious next step.
 
 ## Stack
 
@@ -268,6 +266,15 @@ Phone, WhatsApp, email, Instagram, address, hours, the exchange rate, the usual
 shipping time, categories, suggested brands, and the "comes with" checklist all
 live in one file: [`src/lib/site.ts`](src/lib/site.ts). Edit it and redeploy —
 the header, footer, contact page, filters, and admin form all read from it.
+
+**Spanish and English.** The public site opens in Spanish; the ES | EN toggle in
+the header switches it and remembers the choice in a cookie. Every word of site
+copy, in both languages, is in [`src/lib/i18n/dictionaries.ts`](src/lib/i18n/dictionaries.ts)
+— edit the text there. Categories, conditions, and "comes with" options are stored
+in English and only translated for display, using the tables at the bottom of each
+dictionary; a new category added in `site.ts` needs a Spanish name added there too.
+Piece names and descriptions are shown exactly as typed. The dashboard is English
+only.
 
 Layaway defaults (deposit, number of payments, minimum price) are in
 [`src/lib/finance.ts`](src/lib/finance.ts).

@@ -7,6 +7,7 @@ import { sendLeadToMeta } from "@/lib/meta";
 import { notifyNewLead } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
 import { itemTitle } from "@/lib/format";
+import { DICTIONARIES, isLang } from "@/lib/i18n/dictionaries";
 import { siteUrl } from "@/lib/url";
 import { leadSchema } from "@/lib/validation";
 
@@ -26,9 +27,13 @@ export async function submitLead(
   _prev: LeadFormState,
   formData: FormData,
 ): Promise<LeadFormState> {
+  // The form says which language it was shown in, so replies match it.
+  const langRaw = formData.get("lang");
+  const t = DICTIONARIES[isLang(langRaw) ? langRaw : "es"];
+
   // Honeypot: real people leave this hidden field empty.
   if (formData.get("company")) {
-    return { status: "success", message: "Thanks — we'll be in touch shortly." };
+    return { status: "success", message: t.lead.honeypot };
   }
 
   const parsed = leadSchema.safeParse({
@@ -44,9 +49,9 @@ export async function submitLead(
     const errors: Record<string, string> = {};
     for (const issue of parsed.error.issues) {
       const key = String(issue.path[0] ?? "form");
-      errors[key] ??= issue.message;
+      errors[key] ??= t.lead.errors[key] ?? issue.message;
     }
-    return { status: "error", message: "Please fix the highlighted fields.", errors };
+    return { status: "error", message: t.lead.fixFields, errors };
   }
 
   const { itemId, ...lead } = parsed.data;
@@ -111,7 +116,7 @@ export async function submitLead(
 
   return {
     status: "success",
-    message: "Thanks — a member of our team will reach out within one business hour.",
+    message: t.lead.success,
     eventId: created.id,
   };
 }

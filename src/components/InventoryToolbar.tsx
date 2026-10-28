@@ -3,35 +3,25 @@
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { queryString, withParam, withToggledValue } from "@/lib/searchParams";
-import { CONDITION_LABEL } from "@/lib/format";
+import { useT } from "@/lib/i18n/client";
+import { label, type Dict } from "@/lib/i18n/dictionaries";
 import { SORT_OPTIONS } from "@/lib/sort";
-
-/** Labels for the removable chips above the results grid. */
-const KEY_LABEL: Record<string, string> = {
-  q: "Search",
-  category: "Category",
-  brand: "Designer",
-  condition: "Condition",
-  size: "Size",
-  gender: "For",
-  arrival: "Where",
-  availability: "Showing",
-  priceMin: "Min price",
-  priceMax: "Max price",
-};
 
 const MULTI_KEYS = new Set(["category", "brand", "condition", "size", "gender"]);
 
-function displayValue(key: string, value: string) {
-  if (key === "priceMin" || key === "priceMax") return `$${Number(value).toLocaleString()}`;
-  if (key === "arrival") return value === "arriving" ? "Arriving soon" : "Ready now";
-  if (key === "availability") return value === "sold" ? "Sold" : value === "all" ? "Everything" : value;
-  if (key === "condition") return CONDITION_LABEL[value.toUpperCase()] ?? value;
+function displayValue(key: string, value: string, t: Dict) {
+  if (key === "priceMin" || key === "priceMax") return `$${Number(value).toLocaleString("en-US")}`;
+  if (key === "arrival") return label(t.filters.arrivalValue, value);
+  if (key === "availability") return label(t.filters.availabilityValue, value);
+  if (key === "condition") return label(t.condition, value.toUpperCase());
+  if (key === "category") return label(t.category, value);
+  if (key === "gender") return label(t.gender, value);
   return value;
 }
 
 export function FilterChips() {
   const router = useRouter();
+  const { t } = useT();
   const params = useSearchParams();
 
   const chips: { key: string; value: string }[] = [];
@@ -65,8 +55,8 @@ export function FilterChips() {
           onClick={() => remove(chip.key, chip.value)}
           className="inline-flex items-center gap-2 rounded-full border border-ink-300 bg-surface py-1.5 pl-3 pr-2 text-sm font-medium text-ink-800 hover:border-gold-500"
         >
-          <span className="text-ink-500">{KEY_LABEL[chip.key] ?? chip.key}:</span>
-          {displayValue(chip.key, chip.value)}
+          <span className="text-ink-500">{t.filters.chip[chip.key] ?? chip.key}:</span>
+          {displayValue(chip.key, chip.value, t)}
           <span className="flex h-4 w-4 items-center justify-center rounded-full bg-ink-200 text-ink-700">
             <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none">
               <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
@@ -79,7 +69,7 @@ export function FilterChips() {
         onClick={() => router.push("/shop")}
         className="text-sm font-semibold text-gold-500 hover:underline"
       >
-        Clear all
+        {t.filters.clearAll}
       </button>
     </div>
   );
@@ -87,12 +77,13 @@ export function FilterChips() {
 
 export function SortSelect() {
   const router = useRouter();
+  const { t } = useT();
   const params = useSearchParams();
   const current = params.get("sort") ?? "best";
 
   return (
     <label className="flex items-center gap-2 text-sm text-ink-600">
-      <span className="hidden sm:inline">Sort:</span>
+      <span className="hidden sm:inline">{t.filters.sort}</span>
       <select
         value={current}
         onChange={(event) =>
@@ -104,7 +95,7 @@ export function SortSelect() {
       >
         {SORT_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
-            {option.label}
+            {label(t.sort, option.value)}
           </option>
         ))}
       </select>
@@ -114,6 +105,7 @@ export function SortSelect() {
 
 export function Pagination({ page, pageCount }: { page: number; pageCount: number }) {
   const router = useRouter();
+  const { t } = useT();
   const params = useSearchParams();
 
   if (pageCount <= 1) return null;
@@ -129,14 +121,14 @@ export function Pagination({ page, pageCount }: { page: number; pageCount: numbe
   const pages = pageWindow(page, pageCount);
 
   return (
-    <nav className="mt-10 flex items-center justify-center gap-1.5" aria-label="Pagination">
+    <nav className="mt-10 flex items-center justify-center gap-1.5" aria-label={t.filters.pagination}>
       <button
         type="button"
         onClick={() => go(page - 1)}
         disabled={page <= 1}
         className="rounded-lg border border-ink-300 bg-surface px-3 py-2 text-sm font-semibold text-ink-800 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        Previous
+        {t.filters.previous}
       </button>
       {pages.map((entry, index) =>
         entry === null ? (
@@ -165,7 +157,7 @@ export function Pagination({ page, pageCount }: { page: number; pageCount: numbe
         disabled={page >= pageCount}
         className="rounded-lg border border-ink-300 bg-surface px-3 py-2 text-sm font-semibold text-ink-800 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        Next
+        {t.filters.next}
       </button>
     </nav>
   );

@@ -6,6 +6,9 @@ import { ItemCard } from "@/components/ItemCard";
 import { ItemIllustration } from "@/components/ItemIllustration";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { formatPrice } from "@/lib/format";
+import type { Dict } from "@/lib/i18n/dictionaries";
+import { label } from "@/lib/i18n/dictionaries";
+import { getT } from "@/lib/i18n/server";
 import {
   getArrivingSoon,
   getBrandCounts,
@@ -20,6 +23,7 @@ import { CATEGORIES, site } from "@/lib/site";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const { t } = await getT();
   const [featured, stats, arriving, categoryCounts, brands] = await Promise.all([
     getFeaturedItems(8),
     getInventoryStats(),
@@ -33,40 +37,40 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero stats={stats} />
+      <Hero stats={stats} t={t} />
       {stats.count === 0 ? (
-        <EmptyCollection />
+        <EmptyCollection t={t} />
       ) : (
         <>
           <Row
-            eyebrow="The Edit"
-            title="Highlighted this week"
-            blurb="Hand-picked by our buyers. The pieces we'd reach for first."
+            eyebrow={t.home.edit.eyebrow}
+            title={t.home.edit.title}
+            blurb={t.home.edit.blurb}
             items={featured.slice(0, 4)}
             href="/shop"
-            cta="Shop the collection"
+            cta={t.home.edit.cta}
             priority
           />
-          <Categories counts={categoryCounts} />
+          <Categories counts={categoryCounts} t={t} />
           <Row
-            eyebrow="Just in"
-            title="New in Santo Domingo"
-            blurb="Unpacked, authenticated, and ready to go home with you today."
+            eyebrow={t.home.fresh.eyebrow}
+            title={t.home.fresh.title(site.city)}
+            blurb={t.home.fresh.blurb}
             items={fresh}
             href="/shop?sort=newest&arrival=ready"
-            cta="See everything new"
+            cta={t.home.fresh.cta}
           />
-          <ArrivingSoon items={arriving} count={stats.inTransit} />
-          <Brands brands={brands} />
+          <ArrivingSoon items={arriving} count={stats.inTransit} t={t} />
+          <Brands brands={brands} t={t} />
         </>
       )}
-      <HowItWorks />
-      <RequestCta />
+      <HowItWorks t={t} />
+      <RequestCta t={t} />
     </>
   );
 }
 
-function Hero({ stats }: { stats: Awaited<ReturnType<typeof getInventoryStats>> }) {
+function Hero({ stats, t }: { stats: Awaited<ReturnType<typeof getInventoryStats>>; t: Dict }) {
   return (
     <section className="relative overflow-hidden border-b border-gold-500/20 bg-black">
       <HeroImage className="absolute inset-0 h-full w-full object-cover opacity-50" />
@@ -85,18 +89,17 @@ function Hero({ stats }: { stats: Awaited<ReturnType<typeof getInventoryStats>> 
         <div className="max-w-2xl">
           <span className="inline-flex items-center gap-2 rounded-full border border-gold-500/40 px-3.5 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-gold-300">
             <span className="h-1.5 w-1.5 rounded-full bg-gold-400" />
-            {stats.count} pieces in the collection
+            {t.home.inCollection(stats.count)}
           </span>
 
           <h1 className="mt-6 text-balance font-serif text-5xl leading-[1.02] text-ink-900 sm:text-6xl lg:text-7xl">
-            Authentic luxury,
+            {t.home.title1}
             <br />
-            <em className="text-gold-400">delivered home.</em>
+            <em className="text-gold-400">{t.home.title2}</em>
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-600">
-            Handbags, shoes, watches, and jewelry from the houses you love, bought in the United
-            States, authenticated, and brought to you in the Dominican Republic.
+            {t.home.lede}
           </p>
 
           <div className="mt-8 max-w-xl">
@@ -105,11 +108,11 @@ function Hero({ stats }: { stats: Awaited<ReturnType<typeof getInventoryStats>> 
 
           <dl className="mt-12 grid max-w-xl grid-cols-2 gap-6 border-t border-white/10 pt-6 sm:grid-cols-4">
             {[
-              { label: "In stock", value: String(stats.count) },
-              { label: "Designers", value: String(stats.brandCount) },
-              { label: "Arriving soon", value: String(stats.inTransit) },
+              { label: t.home.stats.inStock, value: String(stats.count) },
+              { label: t.home.stats.designers, value: String(stats.brandCount) },
+              { label: t.home.stats.arriving, value: String(stats.inTransit) },
               {
-                label: "Starting at",
+                label: t.home.stats.from,
                 value: stats.startingPrice ? formatPrice(stats.startingPrice) : "—",
               },
             ].map((stat) => (
@@ -195,7 +198,7 @@ function Row({
   );
 }
 
-function Categories({ counts }: { counts: Map<string, number> }) {
+function Categories({ counts, t }: { counts: Map<string, number>; t: Dict }) {
   // Only categories with stock, in the configured order, so nothing leads to an empty page.
   const stocked = CATEGORIES.filter((category) => (counts.get(category) ?? 0) > 0).slice(0, 8);
   if (stocked.length === 0) return null;
@@ -203,7 +206,7 @@ function Categories({ counts }: { counts: Map<string, number> }) {
   return (
     <section className="border-y border-ink-200 bg-surface py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHead eyebrow="Shop by category" title="Find your next piece" />
+        <SectionHead eyebrow={t.home.categories.eyebrow} title={t.home.categories.title} />
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {stocked.map((category) => (
             <Link
@@ -213,7 +216,7 @@ function Categories({ counts }: { counts: Map<string, number> }) {
             >
               <ItemIllustration category={category} className="aspect-square w-full transition-transform duration-500 group-hover:scale-105" />
               <div className="flex items-baseline justify-between gap-2 border-t border-ink-200 px-4 py-3">
-                <span className="font-serif text-lg text-ink-900">{category}</span>
+                <span className="font-serif text-lg text-ink-900">{label(t.category, category)}</span>
                 <span className="text-xs text-ink-500 tabular-nums">{counts.get(category)}</span>
               </div>
             </Link>
@@ -224,18 +227,18 @@ function Categories({ counts }: { counts: Map<string, number> }) {
   );
 }
 
-function ArrivingSoon({ items, count }: { items: ItemCardData[]; count: number }) {
+function ArrivingSoon({ items, count, t }: { items: ItemCardData[]; count: number; t: Dict }) {
   if (items.length === 0) return null;
   return (
     <section className="py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-card border border-gold-500/40 bg-gold-50 p-6 sm:p-10">
           <SectionHead
-            eyebrow={`Arriving soon · ${count} in transit`}
-            title="Reserve it before it lands"
-            blurb={`These pieces are already bought and on their way from the US, usually ${site.shippingDays} days door to door. Reserve one now and it's yours the day it arrives.`}
+            eyebrow={t.home.arriving.eyebrow(count)}
+            title={t.home.arriving.title}
+            blurb={t.home.arriving.blurb(site.shippingDays)}
             href="/shop?arrival=arriving"
-            cta="See all arriving"
+            cta={t.home.arriving.cta}
           />
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {items.map((item) => (
@@ -248,12 +251,12 @@ function ArrivingSoon({ items, count }: { items: ItemCardData[]; count: number }
   );
 }
 
-function Brands({ brands }: { brands: { brand: string; count: number }[] }) {
+function Brands({ brands, t }: { brands: { brand: string; count: number }[]; t: Dict }) {
   if (brands.length === 0) return null;
   return (
     <section className="py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHead eyebrow="Designers" title="The houses in the collection" />
+        <SectionHead eyebrow={t.home.brands.eyebrow} title={t.home.brands.title} />
         <ul className="mt-8 flex flex-wrap gap-x-8 gap-y-4">
           {brands.map(({ brand, count }) => (
             <li key={brand}>
@@ -274,31 +277,14 @@ function Brands({ brands }: { brands: { brand: string; count: number }[] }) {
   );
 }
 
-function HowItWorks() {
+function HowItWorks({ t }: { t: Dict }) {
   // A real sequence: this is the order a piece actually travels in.
-  const steps = [
-    {
-      title: "Bought in the US",
-      body: "From boutiques, authorised resellers, and private sellers we've vetted. Never from a marketplace we can't verify.",
-    },
-    {
-      title: "Authenticated twice",
-      body: "Checked before it ships and again when it lands. Stitching, hardware, date codes, and materials.",
-    },
-    {
-      title: "Shipped and cleared",
-      body: `We handle the freight and customs. Usually ${site.shippingDays} days from purchase to the showroom.`,
-    },
-    {
-      title: "Yours, your way",
-      body: "Pay in full or on interest-free layaway. Delivered anywhere in the DR, or collect by appointment.",
-    },
-  ];
+  const steps = t.home.how.steps(site.shippingDays);
 
   return (
     <section className="border-t border-ink-200 py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHead eyebrow="How it works" title="From the US to your door" />
+        <SectionHead eyebrow={t.home.how.eyebrow} title={t.home.how.title} />
         <ol className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, index) => (
             <li key={step.title}>
@@ -314,45 +300,42 @@ function HowItWorks() {
   );
 }
 
-function RequestCta() {
+function RequestCta({ t }: { t: Dict }) {
   return (
     <section className="mx-auto max-w-7xl px-4 pb-4 pt-8 sm:px-6 lg:px-8">
       <div className="flex flex-col items-start gap-6 rounded-card border border-gold-500/40 bg-black p-8 sm:flex-row sm:items-center sm:justify-between sm:p-12">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-gold-500">Personal sourcing</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-gold-500">{t.home.requestCta.eyebrow}</p>
           <h2 className="mt-2 font-serif text-3xl text-ink-900 sm:text-4xl">
-            Don&apos;t see it? We&apos;ll find it.
+            {t.home.requestCta.title}
           </h2>
-          <p className="mt-2 max-w-2xl text-ink-600">
-            Send us the bag, the watch, or the sneaker, with your size. We source it in the US and
-            send you one all-in price, shipping and customs included.
-          </p>
+          <p className="mt-2 max-w-2xl text-ink-600">{t.home.requestCta.body}</p>
         </div>
         <div className="flex shrink-0 flex-col gap-3 sm:items-end">
           <Link
             href="/request"
             className="rounded-full bg-gold-500 px-7 py-3.5 text-xs font-semibold uppercase tracking-[0.16em] text-black transition-colors hover:bg-gold-400"
           >
-            Request an item
+            {t.home.requestCta.button}
           </Link>
-          <WhatsAppButton variant="compact" label="Or send a screenshot" message="Hi! I'm looking for a piece. Can you help me find it?" />
+          <WhatsAppButton variant="compact" label={t.whatsapp.orScreenshot} message={t.whatsapp.msgFind} />
         </div>
       </div>
     </section>
   );
 }
 
-function EmptyCollection() {
+function EmptyCollection({ t }: { t: Dict }) {
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <div className="rounded-card border border-dashed border-ink-300 bg-surface px-6 py-16 text-center">
-        <h2 className="font-serif text-2xl text-ink-900">The collection is being unpacked</h2>
+        <h2 className="font-serif text-2xl text-ink-900">{t.home.empty.title}</h2>
         <p className="mt-2 text-ink-600">
-          Sign in to the{" "}
+          {t.home.empty.before}{" "}
           <Link href="/admin" className="font-semibold text-gold-400 hover:underline">
-            staff dashboard
+            {t.home.empty.link}
           </Link>{" "}
-          to list your first piece.
+          {t.home.empty.after}
         </p>
       </div>
     </section>

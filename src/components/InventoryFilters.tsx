@@ -5,7 +5,8 @@ import { useState, useTransition } from "react";
 
 import { hasValue, queryString, withParam, withToggledValue } from "@/lib/searchParams";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { CONDITION_LABEL } from "@/lib/format";
+import { useT } from "@/lib/i18n/client";
+import { label } from "@/lib/i18n/dictionaries";
 import type { FacetCount, InventoryResult } from "@/lib/items";
 import { site } from "@/lib/site";
 
@@ -21,6 +22,7 @@ export function InventoryFilters({
   const router = useRouter();
   const params = useSearchParams();
   const [, startTransition] = useTransition();
+  const { t } = useT();
 
   const push = (next: URLSearchParams) => {
     startTransition(() => router.push(`/shop${queryString(next)}`, { scroll: false }));
@@ -36,7 +38,7 @@ export function InventoryFilters({
       <div className="rounded-card border border-ink-200 bg-surface p-4">
         <div className="flex items-baseline justify-between">
           <p className="text-lg font-bold text-ink-900">
-            {total.toLocaleString()} {total === 1 ? "result" : "results"}
+            {t.filters.results(total)}
           </p>
           {activeCount > 0 && (
             <button
@@ -44,7 +46,7 @@ export function InventoryFilters({
               onClick={() => router.push("/shop")}
               className="text-sm font-semibold text-gold-500 hover:underline"
             >
-              Clear all
+              {t.filters.clearAll}
             </button>
           )}
         </div>
@@ -52,26 +54,24 @@ export function InventoryFilters({
         <KeywordSearch />
 
         <div className="mt-4 rounded-lg border border-gold-500/40 bg-gold-50 p-4">
-          <p className="font-serif text-lg text-ink-900">Looking for something specific?</p>
-          <p className="mt-1 text-sm text-ink-600">
-            Send us a photo and your size. We&apos;ll find it in the US.
-          </p>
+          <p className="font-serif text-lg text-ink-900">{t.filters.specificTitle}</p>
+          <p className="mt-1 text-sm text-ink-600">{t.filters.specificBody}</p>
           <WhatsAppButton
             variant="compact"
-            label="Ask on WhatsApp"
-            message="Hi! I'm looking for a piece I don't see on the site."
+            label={t.whatsapp.ask}
+            message={t.whatsapp.msgNotListed}
             className="mt-3"
           />
         </div>
       </div>
 
-      <Section title="Availability" defaultOpen>
+      <Section title={t.filters.availability} defaultOpen>
         <RadioList
           name="availability"
           options={[
-            { value: "available", label: "Still available" },
-            { value: "sold", label: "Recently sold" },
-            { value: "all", label: "Show both" },
+            { value: "available", label: t.filters.stillAvailable },
+            { value: "sold", label: t.filters.recentlySold },
+            { value: "all", label: t.filters.showBoth },
           ]}
           counts={Object.fromEntries(facets.availability.map((row) => [row.value, row.count]))}
           // "available" is the default, so it lives as an absent param rather
@@ -82,31 +82,32 @@ export function InventoryFilters({
         />
       </Section>
 
-      <Section title="Where it is" defaultOpen>
+      <Section title={t.filters.where} defaultOpen>
         <RadioList
           name="arrival"
           options={[
-            { value: "ready", label: `Ready now in ${site.city}` },
-            { value: "arriving", label: "Arriving soon from the US" },
+            { value: "ready", label: t.filters.readyNow(site.city) },
+            { value: "arriving", label: t.filters.arrivingSoon },
           ]}
           counts={Object.fromEntries(facets.arrival.map((row) => [row.value, row.count]))}
           current={params.get("arrival")}
           onSelect={(value) => set("arrival", value)}
         />
         <p className="mt-2 text-xs leading-relaxed text-ink-500">
-          Pieces in transit can be reserved now. Usually {site.shippingDays} days door to door.
+          {t.filters.transitNote(site.shippingDays)}
         </p>
       </Section>
 
-      <Section title="Category" defaultOpen>
+      <Section title={t.filters.category} defaultOpen>
         <CheckList
           options={facets.category}
+          label={(value) => label(t.category, value)}
           checked={(value) => hasValue(params, "category", value)}
           onToggle={(value) => toggle("category", value)}
         />
       </Section>
 
-      <Section title="Designer" defaultOpen>
+      <Section title={t.filters.designer} defaultOpen>
         <CheckList
           options={facets.brand}
           scroll
@@ -115,7 +116,7 @@ export function InventoryFilters({
         />
       </Section>
 
-      <Section title="Price (USD)" defaultOpen>
+      <Section title={t.filters.price} defaultOpen>
         <RangeInputs
           minKey="priceMin"
           maxKey="priceMax"
@@ -126,16 +127,16 @@ export function InventoryFilters({
         />
       </Section>
 
-      <Section title="Condition">
+      <Section title={t.filters.condition}>
         <CheckList
           options={facets.condition}
-          label={(value) => CONDITION_LABEL[value] ?? value}
+          label={(value) => label(t.condition, value)}
           checked={(value) => hasValue(params, "condition", value.toLowerCase())}
           onToggle={(value) => toggle("condition", value.toLowerCase())}
         />
       </Section>
 
-      <Section title="Size">
+      <Section title={t.filters.size}>
         <CheckList
           options={facets.size}
           scroll
@@ -144,9 +145,10 @@ export function InventoryFilters({
         />
       </Section>
 
-      <Section title="For">
+      <Section title={t.filters.for}>
         <CheckList
           options={facets.gender}
+          label={(value) => label(t.gender, value)}
           checked={(value) => hasValue(params, "gender", value)}
           onToggle={(value) => toggle("gender", value)}
         />
@@ -166,6 +168,7 @@ function countActive(params: URLSearchParams) {
 
 function KeywordSearch() {
   const router = useRouter();
+  const { t } = useT();
   const params = useSearchParams();
   const applied = params.get("q") ?? "";
 
@@ -191,13 +194,13 @@ function KeywordSearch() {
         type="search"
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        placeholder="Try “Neverfull” or “black heels”"
-        aria-label="Search the collection"
+        placeholder={t.filters.searchPlaceholder}
+        aria-label={t.filters.searchLabel}
         className="w-full rounded-full border border-ink-300 bg-ink-50 py-2.5 pl-4 pr-11 text-sm text-ink-900 placeholder:text-ink-400 focus:border-gold-400"
       />
       <button
         type="submit"
-        aria-label="Search"
+        aria-label={t.filters.search}
         className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-gold-500 text-black hover:bg-gold-400"
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
@@ -251,8 +254,9 @@ function CheckList({
   label?: (value: string) => string;
   scroll?: boolean;
 }) {
+  const { t } = useT();
   if (options.length === 0) {
-    return <p className="text-sm text-ink-500">No matches with the current filters.</p>;
+    return <p className="text-sm text-ink-500">{t.filters.noMatches}</p>;
   }
 
   return (
@@ -292,6 +296,7 @@ function RadioList({
   /** For a list that always has one option selected, so "Clear" means nothing. */
   hideClear?: boolean;
 }) {
+  const { t } = useT();
   return (
     <div className="space-y-1">
       {options.map((option) => (
@@ -318,7 +323,7 @@ function RadioList({
           onClick={() => onSelect(null)}
           className="mt-1 text-sm font-semibold text-gold-500 hover:underline"
         >
-          Clear
+          {t.filters.clear}
         </button>
       )}
     </div>

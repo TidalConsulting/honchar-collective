@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 import { ItemIllustration } from "@/components/ItemIllustration";
+import { useT } from "@/lib/i18n/client";
 
 type PhotoImage = { url: string; alt?: string | null };
 
@@ -27,6 +28,7 @@ export function ItemPhoto({
   priority?: boolean;
 }) {
   const [index, setIndex] = useState(0);
+  const { t } = useT();
 
   if (images.length === 0) {
     return (
@@ -58,7 +60,7 @@ export function ItemPhoto({
         <>
           <button
             type="button"
-            aria-label="Previous photo"
+            aria-label={t.card.prevPhoto}
             onClick={(event) => {
               event.preventDefault();
               setIndex((value) => (value - 1 + images.length) % images.length);
@@ -71,7 +73,7 @@ export function ItemPhoto({
           </button>
           <button
             type="button"
-            aria-label="Next photo"
+            aria-label={t.card.nextPhoto}
             onClick={(event) => {
               event.preventDefault();
               setIndex((value) => (value + 1) % images.length);
@@ -88,7 +90,7 @@ export function ItemPhoto({
               <button
                 key={dotIndex}
                 type="button"
-                aria-label={`Photo ${dotIndex + 1}`}
+                aria-label={t.card.photoN(dotIndex + 1)}
                 onClick={(event) => {
                   event.preventDefault();
                   setIndex(dotIndex);

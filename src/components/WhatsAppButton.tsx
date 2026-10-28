@@ -1,6 +1,7 @@
 "use client";
 
 import { trackContact } from "@/components/VisitTracker";
+import { useT } from "@/lib/i18n/client";
 import { whatsappHref } from "@/lib/site";
 
 /**
@@ -10,7 +11,7 @@ import { whatsappHref } from "@/lib/site";
  */
 export function WhatsAppButton({
   message,
-  label = "Message us on WhatsApp",
+  label,
   itemId,
   variant = "solid",
   className = "",
@@ -22,6 +23,7 @@ export function WhatsAppButton({
   variant?: "solid" | "outline" | "compact";
   className?: string;
 }) {
+  const { t } = useT();
   const style =
     variant === "solid"
       ? "bg-gold-500 px-5 py-3.5 text-sm text-black hover:bg-gold-400"
@@ -41,7 +43,7 @@ export function WhatsAppButton({
       className={`inline-flex items-center justify-center gap-2 rounded-full font-semibold uppercase tracking-[0.14em] transition-colors ${style} ${className}`}
     >
       <WhatsAppIcon className={variant === "compact" ? "h-4 w-4" : "h-5 w-5"} />
-      {label}
+      {label ?? t.whatsapp.cta}
     </a>
   );
 }

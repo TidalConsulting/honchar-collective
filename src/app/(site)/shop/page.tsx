@@ -6,14 +6,15 @@ import { InventoryFilters } from "@/components/InventoryFilters";
 import { FilterChips, Pagination, SortSelect } from "@/components/InventoryToolbar";
 import { MobileFilterDrawer } from "@/components/MobileFilterDrawer";
 import { ItemCard } from "@/components/ItemCard";
+import { label } from "@/lib/i18n/dictionaries";
+import { getT } from "@/lib/i18n/server";
 import { cityState } from "@/lib/site";
 import { getInventory, parseFilters, type SearchParams } from "@/lib/items";
 
-export const metadata: Metadata = {
-  title: "Shop the Collection",
-  description:
-    "Authentic designer handbags, shoes, watches, jewelry, and ready-to-wear, in Santo Domingo or on the way from the US.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return { title: t.shop.metaTitle, description: t.shop.metaDescription };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -24,36 +25,36 @@ export default async function InventoryPage({
 }) {
   const params = await searchParams;
   const filters = parseFilters(params);
-  const result = await getInventory(filters);
+  const [result, { t }] = await Promise.all([getInventory(filters), getT()]);
 
   const heading =
     filters.availability === "sold"
-      ? "Recently sold"
+      ? t.shop.recentlySold
       : filters.arrival === "arriving"
-        ? "Arriving soon"
+        ? t.shop.arriving
         : filters.brand.length === 1 && filters.category.length <= 1
-          ? `${filters.brand[0]}${filters.category.length ? ` ${filters.category[0]}` : ""}`
+          ? `${filters.category.length ? `${label(t.category, filters.category[0])} ` : ""}${filters.brand[0]}`
           : filters.category.length === 1
-            ? filters.category[0]
-            : "The collection";
+            ? label(t.category, filters.category[0])
+            : t.shop.collection;
 
   // "Authenticated and ready" is a claim about stock you can still buy, so it
   // can't run over a list of pieces that have already gone.
-  const count = `${result.total.toLocaleString()} ${result.total === 1 ? "piece" : "pieces"}`;
+  const count = t.shop.count(result.total);
   const subheading =
     filters.availability === "sold"
-      ? `${count} we've sold recently — a feel for what moves through here and how fast.`
+      ? t.shop.subSold(count)
       : filters.availability === "all"
-        ? `${count}, available and recently sold together.`
+        ? t.shop.subAll(count)
         : filters.arrival === "arriving"
-          ? `${count} already bought in the US and on the way. Reserve one before it lands.`
-          : `${count} in ${cityState} or on the way — every one authenticated, priced in dollars.`;
+          ? t.shop.subArriving(count)
+          : t.shop.subDefault(count, cityState ?? "");
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-gold-500">Shop</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-gold-500">{t.shop.eyebrow}</p>
           <h1 className="mt-2 font-serif text-4xl text-ink-900 sm:text-5xl">{heading}</h1>
           <p className="mt-2 text-ink-600">{subheading}</p>
         </div>
@@ -90,7 +91,7 @@ export default async function InventoryPage({
           </Suspense>
 
           {result.items.length === 0 ? (
-            <EmptyState />
+            <EmptyState t={t} />
           ) : (
             <>
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -102,7 +103,7 @@ export default async function InventoryPage({
                 <Pagination page={result.page} pageCount={result.pageCount} />
               </Suspense>
               <p className="mt-4 text-center text-sm text-ink-500">
-                Showing page {result.page} of {result.pageCount}
+                {t.shop.pageOf(result.page, result.pageCount)}
               </p>
             </>
           )}
@@ -112,26 +113,23 @@ export default async function InventoryPage({
   );
 }
 
-function EmptyState() {
+function EmptyState({ t }: { t: Awaited<ReturnType<typeof getT>>["t"] }) {
   return (
     <div className="rounded-card border border-dashed border-ink-300 bg-surface px-6 py-20 text-center">
-      <h2 className="font-serif text-2xl text-ink-900">Nothing matches those filters</h2>
-      <p className="mx-auto mt-2 max-w-md text-ink-600">
-        Try widening the price range or clearing a filter or two. Or tell us exactly what you
-        want and we&apos;ll find it in the US for you.
-      </p>
+      <h2 className="font-serif text-2xl text-ink-900">{t.shop.emptyTitle}</h2>
+      <p className="mx-auto mt-2 max-w-md text-ink-600">{t.shop.emptyBody}</p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <Link
           href="/shop"
           className="rounded-full bg-gold-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-gold-400"
         >
-          Clear all filters
+          {t.shop.clearAll}
         </Link>
         <Link
           href="/request"
           className="rounded-full border border-ink-300 px-5 py-2.5 text-sm font-semibold text-ink-800 hover:bg-ink-100"
         >
-          Request an item
+          {t.shop.requestItem}
         </Link>
       </div>
     </div>

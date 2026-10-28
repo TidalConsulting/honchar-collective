@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 
 import { submitLead, type LeadFormState } from "@/app/actions/leads";
+import { useT } from "@/lib/i18n/client";
 
 const INITIAL: LeadFormState = { status: "idle" };
 
@@ -12,10 +13,10 @@ export function LeadForm({
   type = "AVAILABILITY",
   heading,
   subheading,
-  submitLabel = "Check availability",
+  submitLabel,
   defaultMessage = "",
-  messageLabel = "What are you looking for?",
-  messagePlaceholder = "Your size, when you need it, or any questions about the piece.",
+  messageLabel,
+  messagePlaceholder,
   compact = false,
 }: {
   itemId?: string;
@@ -34,6 +35,7 @@ export function LeadForm({
   compact?: boolean;
 }) {
   const [state, formAction] = useActionState(submitLead, INITIAL);
+  const { lang, t } = useT();
 
   // Reported only once the server has actually saved the enquiry, and under
   // the id it came back with, so Meta can match this against the same event
@@ -54,7 +56,7 @@ export function LeadForm({
             <path d="m5 13 4 4L19 7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <h3 className="mt-3 font-serif text-xl text-emerald-200">Request sent</h3>
+        <h3 className="mt-3 font-serif text-xl text-emerald-200">{t.lead.sent}</h3>
         <p className="mt-1 text-sm text-emerald-300">{state.message}</p>
       </div>
     );
@@ -66,6 +68,7 @@ export function LeadForm({
       {subheading && <p className="-mt-1 text-sm text-ink-600">{subheading}</p>}
 
       <input type="hidden" name="type" value={type} />
+      <input type="hidden" name="lang" value={lang} />
       {itemId && <input type="hidden" name="itemId" value={itemId} />}
       <div className="absolute left-[-9999px]" aria-hidden="true">
         <label>
@@ -75,10 +78,10 @@ export function LeadForm({
       </div>
 
       <div className={compact ? "space-y-3" : "grid gap-3 sm:grid-cols-2"}>
-        <TextField name="name" label="Full name" autoComplete="name" error={state.errors?.name} required />
+        <TextField name="name" label={t.lead.fullName} autoComplete="name" error={state.errors?.name} required />
         <TextField
           name="phone"
-          label="WhatsApp or phone"
+          label={t.lead.phone}
           type="tel"
           autoComplete="tel"
           error={state.errors?.phone}
@@ -87,22 +90,22 @@ export function LeadForm({
 
       <TextField
         name="email"
-        label="Email"
+        label={t.lead.email}
         type="email"
         autoComplete="email"
         error={state.errors?.email}
       />
-      <p className="-mt-1.5 text-xs text-ink-500">Leave a WhatsApp number, an email, or both.</p>
+      <p className="-mt-1.5 text-xs text-ink-500">{t.lead.either}</p>
 
       <label className="block">
         <span className="mb-1 block text-sm font-semibold text-ink-800">
-          {messageLabel}
+          {messageLabel ?? t.lead.messageLabel}
         </span>
         <textarea
           name="message"
           rows={3}
           defaultValue={defaultMessage}
-          placeholder={messagePlaceholder}
+          placeholder={messagePlaceholder ?? t.lead.messagePlaceholder}
           className="w-full rounded-lg border border-ink-300 bg-ink-50 px-3 py-2.5 text-sm text-ink-900 placeholder:text-ink-400 focus:border-gold-400"
         />
       </label>
@@ -113,10 +116,10 @@ export function LeadForm({
         </p>
       )}
 
-      <SubmitButton label={submitLabel} />
+      <SubmitButton label={submitLabel ?? t.lead.check} />
 
       <p className="text-xs leading-relaxed text-ink-500">
-        By submitting you agree to be contacted about this item. We never sell your information.
+        {t.lead.consent}
       </p>
     </form>
   );
@@ -124,13 +127,14 @@ export function LeadForm({
 
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
+  const { t } = useT();
   return (
     <button
       type="submit"
       disabled={pending}
       className="w-full rounded-full bg-gold-500 px-5 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-black transition-colors hover:bg-gold-400 disabled:opacity-60"
     >
-      {pending ? "Sending…" : label}
+      {pending ? t.lead.sending : label}
     </button>
   );
 }
